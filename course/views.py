@@ -1,11 +1,9 @@
 from django.shortcuts import render
-
-# Create your views here.
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from .models import FieldRecord
+from .models import FieldRecord, MyUser
 from .serializers import FieldRecordSerializer
 from collections import defaultdict
 from datetime import date, timedelta
@@ -14,7 +12,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.authentication import BaseAuthentication
 import requests
 import json
-from .models import MyUser
 
 class WXLoginView(APIView):
 
@@ -121,52 +118,3 @@ class FieldRecordDetail(APIView):
             else:
                 return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(data={"msg": "Record not exist"}, status=status.HTTP_404_NOT_FOUND)
-
-
-# class CourseList(APIView):
-
-#     def get(self, request):
-#         queryset = Course.objects.all()
-#         s = CourseSerializer(instance=queryset, many=True)
-#         return Response(data=s.data, status=status.HTTP_200_OK)
-
-#     def post(self, request):
-#         s = CourseSerializer(data=request.data)
-#         if s.is_valid():
-#             s.save(teacher=request.user)
-#             return Response(data=s.data, status=status.HTTP_201_CREATED)
-#         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# class CourseDetail(APIView):
-
-#     @staticmethod
-#     def get_course(pk):
-#         try:
-#             return Course.objects.get(pk=pk)
-#         except Course.DoesNotExist:
-#             return None 
-
-#     def get(self, request, pk):
-#         obj = self.get_course(pk)
-#         if obj:
-#             s = CourseSerializer(instance=obj)
-#             return Response(data=s.data, status=status.HTTP_200_OK)
-#         return Response(data={"msg": "Course not exist"}, status=status.HTTP_404_NOT_FOUND)
-
-#     def put(self, request, pk):
-#         obj = self.get_course(pk)
-#         if obj:
-#             s = CourseSerializer(instance=obj, data=request.data, partial=True)
-#             if s.is_valid():
-#                 s.save()
-#                 return Response(data=s.data, status=status.HTTP_200_OK)
-#             else:
-#                 return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-#         return Response(data={"msg": "Course not exist"}, status=status.HTTP_404_NOT_FOUND)
-
-#     def delete(self, request, pk):
-#         obj = self.get_course(pk)
-#         if obj:
-#             obj.delete()
-#             return Response(status=status.HTTP_204_NO_CONTENT)
-#         return Response(data={"msg": "Course not exist"}, status=status.HTTP_404_NOT_FOUND)

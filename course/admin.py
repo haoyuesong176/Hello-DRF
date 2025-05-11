@@ -1,18 +1,15 @@
 from django.contrib import admin
-
-# Register your models here.
-from .models import FieldRecord
-
-# @admin.register(Course)
-# class CourseAdmin(admin.ModelAdmin):
-#     list_display = ('name', 'introduction', 'teacher', 'price')
-#     search_fields = list_display
-#     list_filter = list_display
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from .models import FieldRecord, MyUser
 
 @admin.register(FieldRecord)
 class FieldRecordAdmin(admin.ModelAdmin):
     list_display = ('date', 'time', 'field_name', 'price')
     search_fields = list_display
     list_filter = list_display
+
+@admin.register(MyUser)
+class UserAdmin(BaseUserAdmin):
+    list_display = ('id', 'username', 'email', 'openid', 'is_staff', 'is_superuser')
 
     

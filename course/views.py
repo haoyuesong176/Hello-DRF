@@ -9,7 +9,46 @@ from .models import FieldRecord
 from .serializers import FieldRecordSerializer
 from collections import defaultdict
 from datetime import date, timedelta
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import AllowAny
+from rest_framework.authentication import BaseAuthentication
+import requests
 import json
+from .models import MyUser
+
+class WXLoginView(APIView):
+
+    authentication_classes = []  # 不需要认证
+    permission_classes = [AllowAny]  # 所有人可访问
+
+    def post(self, request):
+        code = request.data.get('code')
+        print(code)
+        wx_url = "https://api.weixin.qq.com/sns/jscode2session"
+        params = {
+            'appid': 'wx25922ebd6daf6d3c',
+            'secret': 'c9ec850e6dab5a66f1f819d977e18ee5',
+            'js_code': code,
+            'grant_type': 'authorization_code'
+        }
+        wx_resp = requests.get(wx_url, params=params).json()
+        openid = wx_resp.get('openid')
+        session_key = wx_resp.get('session_key')
+
+        if not openid:
+            return Response({'error': '登录失败'}, status=400)
+
+        # 查找或创建用户
+        user, created = MyUser.objects.get_or_create(openid=openid)
+
+        # 签发 JWT
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'openid': openid
+        })
+
 
 
 class FieldDictView(APIView):

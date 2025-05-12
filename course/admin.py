@@ -10,6 +10,6 @@ class FieldRecordAdmin(admin.ModelAdmin):
 
 @admin.register(MyUser)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('id', 'username', 'email', 'openid', 'is_staff', 'is_superuser')
+    list_display = ('id', 'username', 'is_staff', 'is_superuser')
 
     

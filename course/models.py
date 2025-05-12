@@ -6,10 +6,19 @@ from django.db import models
 
 
 class MyUser(AbstractUser):
-    openid = models.CharField(max_length=64, unique=True, null=True, blank=True)
+    phone = models.CharField(max_length=15, blank=True, null=True, verbose_name="手机号")
+    realname = models.CharField(max_length=50, blank=True, null=True, verbose_name="真实姓名")
+    nickname = models.CharField(max_length=50, blank=True, null=True, verbose_name="昵称")
+    icon = models.URLField(blank=True, null=True, verbose_name="头像URL")
+    level = models.DecimalField(max_digits=3, decimal_places=1, default=1.0,
+                                verbose_name="网球水平等级", help_text="范围：1.0 - 5.0")
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="账户余额")
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.username or self.openid
+        return self.username
 
 
 class FieldRecord(models.Model):
@@ -43,6 +52,7 @@ class FieldRecord(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['date']),  # 为 date 建立索引
+            models.Index(fields=['booked_user_id', 'status']),  # 复合索引
         ]
 
     def __str__(self):

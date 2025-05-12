@@ -4,12 +4,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from .models import FieldRecord, MyUser
-from .serializers import FieldRecordSerializer
+from .serializers import FieldRecordSerializer, FieldRecordBookingSerializer, FieldRecordUnbookSerializer, MyUserSerializer
 from collections import defaultdict
 from datetime import date, timedelta
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
 from rest_framework.authentication import BaseAuthentication
+from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
 import requests
 import json
 
@@ -47,7 +49,6 @@ class WXLoginView(APIView):
         })
 
 
-
 class FieldDictView(APIView):
     def get(self, request):
         # 获取请求中的日期参数（格式应为 YYYY-MM-DD）
@@ -78,6 +79,9 @@ class FieldDictView(APIView):
 
 
 class FieldRecordList(APIView):
+
+    authentication_classes = []  # 不需要认证
+    permission_classes = [AllowAny]  # 所有人可访问
 
     def get(self, request):
         queryset = FieldRecord.objects.all()
@@ -118,3 +122,83 @@ class FieldRecordDetail(APIView):
             else:
                 return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(data={"msg": "Record not exist"}, status=status.HTTP_404_NOT_FOUND)
+    
+
+# TODO
+class BookFieldRecordsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = FieldRecordBookingSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        id_list = serializer.validated_data['id_list']
+
+        current_user = request.user
+
+        # 更新状态、用户、下单时间
+        FieldRecord.objects.filter(id__in=id_list).update(
+            status=FieldRecord.Status.BOOKED,
+            booked_user_id=current_user.id,
+            booked_order_time=timezone.now()
+        )
+
+        return Response({
+            "message": "Successfully booked the selected field records.",
+            "booked_ids": id_list
+        }, status=status.HTTP_200_OK)
+
+# TODO
+class UserBookedFieldRecordsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        current_user = request.user
+
+        # 查询当前用户所有已预订（status=2）的 FieldRecord
+        records = FieldRecord.objects.filter(
+            booked_user_id=current_user,
+            status=FieldRecord.Status.BOOKED
+        )
+
+        # 序列化数据
+        serializer = FieldRecordSerializer(records, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+# TODO
+class UnbookFieldRecordsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = FieldRecordUnbookSerializer(data=request.data, context={'request': request})
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        id_list = serializer.validated_data['id_list']
+
+        # 更新状态为 AVAILABLE，并清空预订信息
+        FieldRecord.objects.filter(id__in=id_list).update(
+            status=FieldRecord.Status.AVAILABLE,
+            booked_user_id=None,
+            booked_order_time=None
+        )
+
+        return Response({
+            "message": "Selected field records have been successfully unbooked.",
+            "unbooked_ids": id_list
+        }, status=status.HTTP_200_OK)
+
+
+# TODO
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]  # 必须登录才能访问
+
+    def get(self, request, *args, **kwargs):
+        user = request.user  # 获取当前登录用户
+        serializer = MyUserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

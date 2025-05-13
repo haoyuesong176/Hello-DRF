@@ -19,10 +19,10 @@ class WXLoginView(APIView):
 
     authentication_classes = []  # 不需要认证
     permission_classes = [AllowAny]  # 所有人可访问
+    
 
     def post(self, request):
         code = request.data.get('code')
-        print(code)
         wx_url = "https://api.weixin.qq.com/sns/jscode2session"
         params = {
             'appid': 'wx25922ebd6daf6d3c',
@@ -38,7 +38,18 @@ class WXLoginView(APIView):
             return Response({'error': '登录失败'}, status=400)
 
         # 查找或创建用户
-        user, created = MyUser.objects.get_or_create(openid=openid)
+        user, created = MyUser.objects.get_or_create(
+            username=openid,
+            defaults={
+                'username': openid,
+                # 可选：设置其他默认字段，如：
+                # 'level': 1.0,
+                # 'balance': 0.00
+            }
+        )
+
+        user.session_key = session_key
+        user.save(update_fields=['session_key'])  # 更高效地只更新该字段
 
         # 签发 JWT
         refresh = RefreshToken.for_user(user)
@@ -78,55 +89,56 @@ class FieldDictView(APIView):
         return Response(FieldDict)
 
 
-class FieldRecordList(APIView):
+# class FieldRecordList(APIView):
 
-    authentication_classes = []  # 不需要认证
-    permission_classes = [AllowAny]  # 所有人可访问
+#     authentication_classes = []  # 不需要认证
+#     # permission_classes = [AllowAny]  # 所有人可访问
 
-    def get(self, request):
-        queryset = FieldRecord.objects.all()
-        s = FieldRecordSerializer(instance=queryset, many=True)
-        return Response(data=s.data, status=status.HTTP_200_OK)
+#     def get(self, request):
+#         queryset = FieldRecord.objects.all()
+#         s = FieldRecordSerializer(instance=queryset, many=True)
+#         return Response(data=s.data, status=status.HTTP_200_OK)
 
-    def post(self, request):
-        s = FieldRecordSerializer(data=request.data)
-        if s.is_valid():
-            s.save()
-            return Response(data=s.data, status=status.HTTP_201_CREATED)
-        return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def post(self, request):
+#         s = FieldRecordSerializer(data=request.data)
+#         if s.is_valid():
+#             s.save()
+#             return Response(data=s.data, status=status.HTTP_201_CREATED)
+#         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class FieldRecordDetail(APIView):
+# class FieldRecordDetail(APIView):
 
-    @staticmethod
-    def get_record(pk):
-        try:
-            return FieldRecord.objects.get(pk=pk)
-        except FieldRecord.DoesNotExist:
-            return None 
+#     @staticmethod
+#     def get_record(pk):
+#         try:
+#             return FieldRecord.objects.get(pk=pk)
+#         except FieldRecord.DoesNotExist:
+#             return None 
 
-    def get(self, request, pk):
-        obj = self.get_record(pk)
-        if obj:
-            s = FieldRecordSerializer(instance=obj)
-            return Response(data=s.data, status=status.HTTP_200_OK)
-        return Response(data={"msg": "Record not exist"}, status=status.HTTP_404_NOT_FOUND)
+#     def get(self, request, pk):
+#         obj = self.get_record(pk)
+#         if obj:
+#             s = FieldRecordSerializer(instance=obj)
+#             return Response(data=s.data, status=status.HTTP_200_OK)
+#         return Response(data={"msg": "Record not exist"}, status=status.HTTP_404_NOT_FOUND)
 
-    def put(self, request, pk):
-        obj = self.get_record(pk)
-        if obj:
-            s = FieldRecordSerializer(instance=obj, data=request.data, partial=True)
-            if s.is_valid():
-                s.save()
-                return Response(data=s.data, status=status.HTTP_200_OK)
-            else:
-                return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(data={"msg": "Record not exist"}, status=status.HTTP_404_NOT_FOUND)
+#     def put(self, request, pk):
+#         obj = self.get_record(pk)
+#         if obj:
+#             s = FieldRecordSerializer(instance=obj, data=request.data, partial=True)
+#             if s.is_valid():
+#                 s.save()
+#                 return Response(data=s.data, status=status.HTTP_200_OK)
+#             else:
+#                 return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+#         return Response(data={"msg": "Record not exist"}, status=status.HTTP_404_NOT_FOUND)
     
 
-# TODO
 class BookFieldRecordsView(APIView):
     permission_classes = [IsAuthenticated]
+    # authentication_classes = []
+    # permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         serializer = FieldRecordBookingSerializer(data=request.data)

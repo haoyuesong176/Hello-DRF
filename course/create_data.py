@@ -11,7 +11,7 @@ def create_daily_records(target_date_str='2025-05-10'):
 
     start_time = time(7, 0)
     end_time = time(21, 30)
-    field_names = ['field1', 'field2', 'field3']
+    field_names = ['1号球场', '2号球场', '3号球场']
     price = 50
     status = FieldRecord.Status.AVAILABLE
 

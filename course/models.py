@@ -13,7 +13,7 @@ class MyUser(AbstractUser):
     level = models.DecimalField(max_digits=3, decimal_places=1, default=1.0,
                                 verbose_name="网球水平等级", help_text="范围：1.0 - 5.0")
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="账户余额")
-
+    session_key = models.CharField(max_length=50, blank=True, null=True, verbose_name="session_key")
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
 

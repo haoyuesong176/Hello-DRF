@@ -42,7 +42,7 @@ class WXLoginView(APIView):
             username=openid,
             defaults={
                 'username': openid,
-                # 可选：设置其他默认字段，如：
+                'nickname': '匿名用户',
                 # 'level': 1.0,
                 # 'balance': 0.00
             }
@@ -162,7 +162,7 @@ class BookFieldRecordsView(APIView):
             "booked_ids": id_list
         }, status=status.HTTP_200_OK)
 
-# TODO
+
 class UserBookedFieldRecordsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -181,7 +181,6 @@ class UserBookedFieldRecordsView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
-# TODO
 class UnbookFieldRecordsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -206,7 +205,6 @@ class UnbookFieldRecordsView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-# TODO
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]  # 必须登录才能访问
 

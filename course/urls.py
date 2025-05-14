@@ -10,5 +10,6 @@ urlpatterns = [
     path('api/wx-login/', views.WXLoginView.as_view(), name='login-auth'),
     path('api/user-book-data/', views.UserBookedFieldRecordsView.as_view(), name='user-book-data'),
     path('api/user-profile/', views.UserProfileView.as_view(), name='user-profile'),
+    path('api/update-user-icon/', views.UpdateUserIconView.as_view(), name='user-icon-update'),
 ]
 

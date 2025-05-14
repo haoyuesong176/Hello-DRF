@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
 import requests
 import json
@@ -212,3 +213,19 @@ class UserProfileView(APIView):
         user = request.user  # 获取当前登录用户
         serializer = MyUserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UpdateUserIconView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+
+    def patch(self, request, format=None):
+        user = request.user  # 获取当前登录用户
+        icon_data = {'icon': request.data.get('icon')}  # 只提取icon字段
+        
+        serializer = MyUserSerializer(user, data=icon_data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -70,10 +70,23 @@ class FieldRecordUnbookSerializer(serializers.Serializer):
         return value
     
 class MyUserSerializer(serializers.ModelSerializer):
+    # customized icon serializer 
+    icon = serializers.SerializerMethodField()
+
     class Meta:
         model = MyUser
         fields = [
             'username', 'phone', 'realname', 'nickname',
             'icon', 'level', 'balance', 'email', 'date_joined'
         ]
-        read_only_fields = fields  # 所有字段只读，因为只是获取信息
+        read_only_fields = [
+            'username', 'phone', 'realname', 'nickname',
+            'level', 'balance', 'email', 'date_joined'
+        ]
+    
+    def get_icon(self, obj):
+        if obj.icon:
+            request = self.context.get('request')
+            photo_url = obj.icon.url
+            return request.build_absolute_uri(photo_url) if request else photo_url
+        return None

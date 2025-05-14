@@ -71,7 +71,7 @@ class FieldRecordUnbookSerializer(serializers.Serializer):
     
 class MyUserSerializer(serializers.ModelSerializer):
     # customized icon serializer 
-    icon = serializers.SerializerMethodField()
+    # icon = serializers.SerializerMethodField()
 
     class Meta:
         model = MyUser
@@ -84,9 +84,9 @@ class MyUserSerializer(serializers.ModelSerializer):
             'level', 'balance', 'email', 'date_joined'
         ]
     
-    def get_icon(self, obj):
-        if obj.icon:
-            request = self.context.get('request')
-            photo_url = obj.icon.url
-            return request.build_absolute_uri(photo_url) if request else photo_url
-        return None
+    # def get_icon(self, obj):
+    #     if obj.icon:
+    #         request = self.context.get('request')
+    #         photo_url = obj.icon.url
+    #         return request.build_absolute_uri(photo_url) if request else photo_url
+    #     return None

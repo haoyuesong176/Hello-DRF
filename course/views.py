@@ -215,15 +215,33 @@ class UserProfileView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# class UpdateUserIconView(APIView):
+#     parser_classes = [MultiPartParser, FormParser]
+
+#     def patch(self, request, format=None):
+#         user = request.user  # 获取当前登录用户
+#         icon_data = {'icon': request.data.get('icon')}  # 只提取icon字段
+        
+#         serializer = MyUserSerializer(user, data=icon_data, partial=True)
+        
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         else:
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class UpdateUserIconView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
-    def patch(self, request, format=None):
-        user = request.user  # 获取当前登录用户
-        icon_data = {'icon': request.data.get('icon')}  # 只提取icon字段
-        
-        serializer = MyUserSerializer(user, data=icon_data, partial=True)
-        
+    def post(self, request, format=None):  # 改为支持 POST
+        user = request.user
+        icon_file = request.data.get('icon')
+
+        if not icon_file:
+            return Response({"error": "No icon file provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = MyUserSerializer(user, data={'icon': icon_file}, partial=True)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

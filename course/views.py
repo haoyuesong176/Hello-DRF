@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from .models import FieldRecord, MyUser
-from .serializers import FieldRecordSerializer, FieldRecordBookingSerializer, FieldRecordUnbookSerializer, MyUserSerializer
+from .serializers import *
 from collections import defaultdict
 from datetime import date, timedelta
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -138,8 +138,6 @@ class FieldDictView(APIView):
 
 class BookFieldRecordsView(APIView):
     permission_classes = [IsAuthenticated]
-    # authentication_classes = []
-    # permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         serializer = FieldRecordBookingSerializer(data=request.data)
@@ -215,21 +213,6 @@ class UserProfileView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# class UpdateUserIconView(APIView):
-#     parser_classes = [MultiPartParser, FormParser]
-
-#     def patch(self, request, format=None):
-#         user = request.user  # 获取当前登录用户
-#         icon_data = {'icon': request.data.get('icon')}  # 只提取icon字段
-        
-#         serializer = MyUserSerializer(user, data=icon_data, partial=True)
-        
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         else:
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class UpdateUserIconView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
@@ -247,3 +230,34 @@ class UpdateUserIconView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MatchFieldRecordsView(APIView):
+    permission_classes = [IsAuthenticated]
+    # authentication_classes = []  # 不需要认证
+    # permission_classes = [AllowAny]  # 所有人可访问
+
+    def post(self, request, *args, **kwargs):
+        serializer = FieldRecordMatchingSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        id_list = serializer.validated_data['id_list']
+        payment_type = serializer.validated_data['payment_type']
+        min_level = serializer.validated_data['min_level']
+
+        current_user = request.user
+
+        # 更新状态与匹配相关字段
+        FieldRecord.objects.filter(id__in=id_list).update(
+            status=FieldRecord.Status.MATCHING,
+            matching_user_id=current_user.id,
+            matching_order_time=timezone.now(),
+            matching_min_level=min_level,
+            matching_payment_type=payment_type
+        )
+
+        return Response({
+            "message": "Successfully updated records for matching.",
+            "matched_ids": id_list
+        }, status=status.HTTP_200_OK)

@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 
@@ -29,6 +29,10 @@ class FieldRecord(models.Model):
         MATCHING = 3, 'Matching'
         MATCHED = 4, 'Matched'
 
+    class PaymentType(models.IntegerChoices):
+        AVERAGE = 1, "平摊"
+        PERSONAL = 2, "个人承担"
+
     date = models.DateField()
     time = models.TimeField()
     field_name = models.CharField(max_length=100)
@@ -40,15 +44,49 @@ class FieldRecord(models.Model):
         default=Status.AVAILABLE,
     )
 
+    # booked Info
+
     booked_user_id = models.ForeignKey(
         MyUser,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='field_records'
+        related_name='booked_field_records'
     )
 
     booked_order_time = models.DateTimeField(null=True, blank=True)
+
+    # matching Info
+
+    matching_user_id = models.ForeignKey(
+        MyUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='matched_field_records'
+    )
+
+    matching_order_time = models.DateTimeField(null=True, blank=True)
+
+    matching_min_level = models.DecimalField(
+        max_digits=2,  # 总共最多两位，比如 5.0
+        decimal_places=1,  # 保留一位小数
+        validators=[
+            MinValueValidator(1.0),
+            MaxValueValidator(5.0)
+        ],
+        null=True,
+        blank=True
+    )
+
+    matching_payment_type = models.IntegerField(
+        choices=PaymentType.choices,
+        default=PaymentType.AVERAGE,
+        null=True,
+        blank=True
+    )
+
+    # matched Info
 
     class Meta:
         indexes = [

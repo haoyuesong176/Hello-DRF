@@ -4,7 +4,7 @@ from .models import FieldRecord, MyUser
 
 @admin.register(FieldRecord)
 class FieldRecordAdmin(admin.ModelAdmin):
-    list_display = ('id', 'date', 'time', 'field_name', 'price', 'booked_user_id')
+    list_display = ('id', 'date', 'time', 'field_name', 'price', 'status')
     search_fields = list_display
     list_filter = list_display
 

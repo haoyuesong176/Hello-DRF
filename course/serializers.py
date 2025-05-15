@@ -90,3 +90,16 @@ class MyUserSerializer(serializers.ModelSerializer):
     #         photo_url = obj.icon.url
     #         return request.build_absolute_uri(photo_url) if request else photo_url
     #     return None
+
+class FieldRecordMatchingSerializer(serializers.Serializer):
+    id_list = serializers.ListField(
+        child=serializers.IntegerField(),
+        allow_empty=False
+    )
+    payment_type = serializers.ChoiceField(choices=FieldRecord.PaymentType.choices)
+    min_level = serializers.DecimalField(
+        max_digits=2,
+        decimal_places=1,
+        min_value=1.0,
+        max_value=5.0
+    )

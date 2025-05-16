@@ -88,52 +88,6 @@ class FieldDictView(APIView):
             FieldDict[time_str][record.field_name] = data
 
         return Response(FieldDict)
-
-
-# class FieldRecordList(APIView):
-
-#     authentication_classes = []  # 不需要认证
-#     # permission_classes = [AllowAny]  # 所有人可访问
-
-#     def get(self, request):
-#         queryset = FieldRecord.objects.all()
-#         s = FieldRecordSerializer(instance=queryset, many=True)
-#         return Response(data=s.data, status=status.HTTP_200_OK)
-
-#     def post(self, request):
-#         s = FieldRecordSerializer(data=request.data)
-#         if s.is_valid():
-#             s.save()
-#             return Response(data=s.data, status=status.HTTP_201_CREATED)
-#         return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class FieldRecordDetail(APIView):
-
-#     @staticmethod
-#     def get_record(pk):
-#         try:
-#             return FieldRecord.objects.get(pk=pk)
-#         except FieldRecord.DoesNotExist:
-#             return None 
-
-#     def get(self, request, pk):
-#         obj = self.get_record(pk)
-#         if obj:
-#             s = FieldRecordSerializer(instance=obj)
-#             return Response(data=s.data, status=status.HTTP_200_OK)
-#         return Response(data={"msg": "Record not exist"}, status=status.HTTP_404_NOT_FOUND)
-
-#     def put(self, request, pk):
-#         obj = self.get_record(pk)
-#         if obj:
-#             s = FieldRecordSerializer(instance=obj, data=request.data, partial=True)
-#             if s.is_valid():
-#                 s.save()
-#                 return Response(data=s.data, status=status.HTTP_200_OK)
-#             else:
-#                 return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-#         return Response(data={"msg": "Record not exist"}, status=status.HTTP_404_NOT_FOUND)
     
 
 class BookFieldRecordsView(APIView):
@@ -261,3 +215,34 @@ class MatchFieldRecordsView(APIView):
             "message": "Successfully updated records for matching.",
             "matched_ids": id_list
         }, status=status.HTTP_200_OK)
+    
+
+class FieldMatchingUserInfoView(APIView):
+    
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, field_id, *args, **kwargs):
+        try:
+            field_record = FieldRecord.objects.get(id=field_id)
+        except FieldRecord.DoesNotExist:
+            return Response(
+                {"error": "FieldRecord not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # 校验状态是否为 MATCHING
+        if field_record.status != field_record.Status.MATCHING:
+            return Response(
+                {"error": "The current status is not MATCHING."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        matching_user = field_record.matching_user_id
+        if not matching_user:
+            return Response(
+                {"error": "No matching user associated with this field record."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = MatchingUserInfoSerializer(matching_user, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)

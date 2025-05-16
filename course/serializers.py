@@ -93,3 +93,16 @@ class FieldRecordMatchingSerializer(serializers.Serializer):
         min_value=1.0,
         max_value=5.0
     )
+
+class MatchingUserInfoSerializer(serializers.ModelSerializer):
+    icon = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MyUser
+        fields = ['id', 'nickname', 'level', 'icon']
+
+    def get_icon(self, obj):
+        request = self.context.get('request')
+        if obj.icon and hasattr(obj.icon, 'url'):
+            return request.build_absolute_uri(obj.icon.url)
+        return None

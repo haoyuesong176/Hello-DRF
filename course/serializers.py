@@ -16,8 +16,7 @@ class FieldRecordSerializer(serializers.ModelSerializer):
             'field_name',
             'price',
             'status',
-            'status_label',
-            'booked_order_time'
+            'status_label'
         ]
 
 class FieldRecordBookingSerializer(serializers.Serializer):
@@ -70,8 +69,6 @@ class FieldRecordUnbookSerializer(serializers.Serializer):
         return value
     
 class MyUserSerializer(serializers.ModelSerializer):
-    # customized icon serializer 
-    # icon = serializers.SerializerMethodField()
 
     class Meta:
         model = MyUser
@@ -83,13 +80,6 @@ class MyUserSerializer(serializers.ModelSerializer):
             'username', 'phone', 'realname', 'nickname',
             'level', 'balance', 'email', 'date_joined'
         ]
-    
-    # def get_icon(self, obj):
-    #     if obj.icon:
-    #         request = self.context.get('request')
-    #         photo_url = obj.icon.url
-    #         return request.build_absolute_uri(photo_url) if request else photo_url
-    #     return None
 
 class FieldRecordMatchingSerializer(serializers.Serializer):
     id_list = serializers.ListField(

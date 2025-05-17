@@ -63,7 +63,7 @@ class FieldRecord(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='matched_field_records'
+        related_name='matching_field_records'
     )
 
     matching_order_time = models.DateTimeField(null=True, blank=True)
@@ -87,6 +87,17 @@ class FieldRecord(models.Model):
     )
 
     # matched Info
+
+    matched_user_id = models.ForeignKey(
+        MyUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='matched_field_records'
+    )
+
+    matched_order_time = models.DateTimeField(null=True, blank=True)
+
 
     class Meta:
         indexes = [

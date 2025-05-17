@@ -106,3 +106,10 @@ class MatchingUserInfoSerializer(serializers.ModelSerializer):
         if obj.icon and hasattr(obj.icon, 'url'):
             return request.build_absolute_uri(obj.icon.url)
         return None
+
+class ConfirmMatchSerializer(serializers.Serializer):
+    id_list = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        allow_empty=False,
+        help_text="List of FieldRecord IDs to mark as matched."
+    )

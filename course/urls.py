@@ -5,6 +5,7 @@ urlpatterns = [
     path('api/field-data/', views.FieldDictView.as_view(), name='field-data'),
     path('api/field-book/', views.BookFieldRecordsView.as_view(), name='book'),
     path('api/field-matching/', views.MatchFieldRecordsView.as_view(), name='matching'),
+    path('api/field-matched/', views.ConfirmMatchFieldRecordsView.as_view(), name='matched'),
     path('api/field-unbook/', views.UnbookFieldRecordsView.as_view(), name='unbook'),
     path('api/wx-login/', views.WXLoginView.as_view(), name='login-auth'),
     path('api/user-book-data/', views.UserBookedFieldRecordsView.as_view(), name='user-book-data'),

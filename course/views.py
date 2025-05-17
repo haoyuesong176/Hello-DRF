@@ -188,8 +188,6 @@ class UpdateUserIconView(APIView):
 
 class MatchFieldRecordsView(APIView):
     permission_classes = [IsAuthenticated]
-    # authentication_classes = []  # 不需要认证
-    # permission_classes = [AllowAny]  # 所有人可访问
 
     def post(self, request, *args, **kwargs):
         serializer = FieldRecordMatchingSerializer(data=request.data)
@@ -246,3 +244,26 @@ class FieldMatchingUserInfoView(APIView):
 
         serializer = MatchingUserInfoSerializer(matching_user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ConfirmMatchFieldRecordsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = ConfirmMatchSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        id_list = serializer.validated_data['id_list']
+        current_user = request.user
+
+        updated_count = FieldRecord.objects.filter(id__in=id_list).update(
+            status=FieldRecord.Status.MATCHED,
+            matched_user_id=current_user.id,
+            matched_order_time=timezone.now()
+        )
+
+        return Response({
+            "message": f"Successfully marked {updated_count} records as matched.",
+            "matched_ids": id_list
+        }, status=status.HTTP_200_OK)

@@ -67,7 +67,8 @@ class FieldRecordUnbookSerializer(serializers.Serializer):
                 raise serializers.ValidationError(f"Field record {record.id} is not in BOOKED status.")
 
         return value
-    
+
+
 class MyUserSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -94,6 +95,7 @@ class FieldRecordMatchingSerializer(serializers.Serializer):
         max_value=5.0
     )
 
+
 class MatchingUserInfoSerializer(serializers.ModelSerializer):
     icon = serializers.SerializerMethodField()
 
@@ -107,9 +109,47 @@ class MatchingUserInfoSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.icon.url)
         return None
 
+
 class ConfirmMatchSerializer(serializers.Serializer):
     id_list = serializers.ListField(
         child=serializers.IntegerField(min_value=1),
         allow_empty=False,
         help_text="List of FieldRecord IDs to mark as matched."
     )
+
+
+class FieldRecordScheduleSerializer(serializers.ModelSerializer):
+    status_label = serializers.SerializerMethodField()
+    opponent_icon_url = serializers.SerializerMethodField()
+    time = serializers.TimeField(format='%H:%M', read_only=True)  # 格式化时间为 HH:MM
+
+    class Meta:
+        model = FieldRecord
+        fields = [
+            'time',
+            'field_name',
+            'status',
+            'status_label',
+            'opponent_icon_url'
+        ]
+
+    def get_status_label(self, obj):
+        return obj.get_status_display()
+
+    def get_opponent_icon_url(self, obj):
+        request = self.context.get('request')
+        if obj.status == FieldRecord.Status.MATCHED:
+            user = self.context['request'].user
+            opponent = None
+
+            # 查找除了当前用户以外的其他参与者
+            if obj.matched_user_id and obj.matched_user_id != user:
+                opponent = obj.matched_user_id
+            elif obj.matching_user_id and obj.matching_user_id != user:
+                opponent = obj.matching_user_id
+            elif obj.booked_user_id and obj.booked_user_id != user:
+                opponent = obj.booked_user_id  # 备用情况
+
+            if opponent and opponent.icon:
+                return request.build_absolute_uri(opponent.icon.url)
+        return None

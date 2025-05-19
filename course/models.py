@@ -9,7 +9,6 @@ class MyUser(AbstractUser):
     phone = models.CharField(max_length=15, blank=True, null=True, verbose_name="手机号")
     realname = models.CharField(max_length=50, blank=True, null=True, verbose_name="真实姓名")
     nickname = models.CharField(max_length=50, blank=True, null=True, verbose_name="昵称")
-    # icon = models.URLField(blank=True, null=True, verbose_name="头像URL")
     icon = models.ImageField(upload_to='user_icons/', blank=True, null=True, verbose_name="头像")
     level = models.DecimalField(max_digits=3, decimal_places=1, default=1.0,
                                 verbose_name="网球水平等级", help_text="范围：1.0 - 5.0")
@@ -97,7 +96,6 @@ class FieldRecord(models.Model):
     )
 
     matched_order_time = models.DateTimeField(null=True, blank=True)
-
 
     class Meta:
         indexes = [

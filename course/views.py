@@ -13,6 +13,7 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
+from django.db.models import Q
 import requests
 import json
 
@@ -267,3 +268,20 @@ class ConfirmMatchFieldRecordsView(APIView):
             "message": f"Successfully marked {updated_count} records as matched.",
             "matched_ids": id_list
         }, status=status.HTTP_200_OK)
+    
+
+class UserTodayScheduleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        today = date.today()
+        user = request.user
+
+        # 查询今日与当前用户相关的日程记录
+        records = FieldRecord.objects.filter(
+            Q(booked_user_id=user) | Q(matching_user_id=user) | Q(matched_user_id=user),
+            date=today
+        ).order_by('time')
+
+        serializer = FieldRecordScheduleSerializer(records, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)

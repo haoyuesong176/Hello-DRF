@@ -133,7 +133,25 @@ class UserBookedFieldRecordsView(APIView):
         serializer = FieldRecordSerializer(records, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+
+class UserMatchingFieldRecordsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        current_user = request.user
+
+        # 查询当前用户所有 status=3（MATCHING）的 FieldRecord
+        records = FieldRecord.objects.filter(
+            matching_user_id=current_user,
+            status=FieldRecord.Status.MATCHING
+        )
+
+        # 序列化数据
+        serializer = FieldRecordSerializerMatching(records, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class UnbookFieldRecordsView(APIView):
     permission_classes = [IsAuthenticated]

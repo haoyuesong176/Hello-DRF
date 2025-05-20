@@ -29,7 +29,7 @@ class FieldRecord(models.Model):
         MATCHED = 4, 'Matched'
 
     class PaymentType(models.IntegerChoices):
-        AVERAGE = 1, "平摊"
+        AVERAGE = 1, "平摊制"
         PERSONAL = 2, "个人承担"
 
     date = models.DateField()

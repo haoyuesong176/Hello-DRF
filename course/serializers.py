@@ -4,8 +4,7 @@ from .models import FieldRecord, MyUser
 
 class FieldRecordSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source='get_status_display')
-    # booked_user_username = serializers.CharField(source='booked_user_id.username', allow_null=True)
-    # booked_order_time = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%S%z', allow_null=True)
+    time = serializers.TimeField(format='%H:%M', read_only=True)
 
     class Meta:
         model = FieldRecord
@@ -18,6 +17,27 @@ class FieldRecordSerializer(serializers.ModelSerializer):
             'status',
             'status_label'
         ]
+
+
+class FieldRecordSerializerMatching(serializers.ModelSerializer):
+    status_label = serializers.CharField(source='get_status_display')
+    time = serializers.TimeField(format='%H:%M', read_only=True)
+
+    class Meta:
+        model = FieldRecord
+        fields = [
+            'id',
+            'date',
+            'time',
+            'field_name',
+            'price',
+            'status',
+            'status_label',
+            'matching_order_time',
+            'matching_min_level',
+            'matching_payment_type',
+        ]
+
 
 class FieldRecordBookingSerializer(serializers.Serializer):
     id_list = serializers.ListField(

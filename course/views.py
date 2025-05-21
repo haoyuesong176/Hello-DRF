@@ -151,6 +151,27 @@ class UserMatchingFieldRecordsView(APIView):
         serializer = FieldRecordSerializerMatching(records, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+class UserMatchedFieldRecordsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        current_user = request.user
+
+        records = FieldRecord.objects.filter(
+            status=FieldRecord.Status.MATCHED,
+            matching_user_id=current_user
+        ).union(
+            FieldRecord.objects.filter(
+                status=FieldRecord.Status.MATCHED,
+                matched_user_id=current_user
+            )
+        )
+
+        serializer = FieldRecordSerializerMatched(records, many=True, context={'request': request})
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UnbookFieldRecordsView(APIView):
@@ -174,6 +195,38 @@ class UnbookFieldRecordsView(APIView):
         return Response({
             "message": "Selected field records have been successfully unbooked.",
             "unbooked_ids": id_list
+        }, status=status.HTTP_200_OK)
+    
+
+class UnmatchingFieldRecordsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = FieldRecordUnmatchSerializer(data=request.data, context={'request': request})
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        id_list = serializer.validated_data['id_list']
+
+        # 过滤出状态为 MATCHING 的记录
+        records = FieldRecord.objects.filter(
+            id__in=id_list,
+            status=FieldRecord.Status.MATCHING
+        )
+
+        # 更新状态为 AVAILABLE，并清空 matching 字段
+        records.update(
+            status=FieldRecord.Status.AVAILABLE,
+            matching_user_id=None,
+            matching_order_time=None,
+            matching_min_level=None,
+            matching_payment_type=None,
+        )
+
+        return Response({
+            "message": "Selected field records have been successfully un-matched and set to available.",
+            "unmatched_ids": list(records.values_list('id', flat=True))
         }, status=status.HTTP_200_OK)
 
 
@@ -247,7 +300,6 @@ class FieldMatchingUserInfoView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # 校验状态是否为 MATCHING
         if field_record.status != field_record.Status.MATCHING:
             return Response(
                 {"error": "The current status is not MATCHING."},

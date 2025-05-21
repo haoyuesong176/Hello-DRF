@@ -39,6 +39,56 @@ class FieldRecordSerializerMatching(serializers.ModelSerializer):
         ]
 
 
+class FieldRecordSerializerMatched(serializers.ModelSerializer):
+    status_label = serializers.CharField(source='get_status_display')
+    time = serializers.TimeField(format='%H:%M', read_only=True)
+    opponent_icon_url = serializers.SerializerMethodField()
+    opponent_nickname = serializers.SerializerMethodField()
+    opponent_level = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FieldRecord
+        fields = [
+            'id',
+            'date',
+            'time',
+            'field_name',
+            'price',
+            'status',
+            'status_label',
+            'matched_order_time',
+            'opponent_icon_url',
+            'opponent_nickname',
+            'opponent_level',
+        ]
+
+    def get_opponent_icon_url(self, obj):
+        current_user = self.context['request'].user
+        request = self.context.get('request')
+        if obj.matching_user_id == current_user:
+            return request.build_absolute_uri(obj.matched_user_id.icon.url) if obj.matched_user_id and obj.matched_user_id.icon else None
+        elif obj.matched_user_id == current_user:
+            return request.build_absolute_uri(obj.matching_user_id.icon.url) if obj.matching_user_id and obj.matching_user_id.icon else None
+
+    def get_opponent_nickname(self, obj):
+        current_user = self.context['request'].user
+        if obj.matching_user_id == current_user:
+            return obj.matched_user_id.nickname if obj.matched_user_id else None
+        elif obj.matched_user_id == current_user:
+            return obj.matching_user_id.nickname if obj.matching_user_id else None
+        
+    def get_opponent_level(self, obj):
+        current_user = self.context['request'].user
+        if obj.matching_user_id == current_user:
+            level = obj.matched_user_id.level if obj.matched_user_id else None
+        elif obj.matched_user_id == current_user:
+            level = obj.matching_user_id.level if obj.matching_user_id else None
+        else:
+            return None 
+        
+        return f"{level:.1f}" if level is not None else None
+
+
 class FieldRecordBookingSerializer(serializers.Serializer):
     id_list = serializers.ListField(
         child=serializers.IntegerField(),
@@ -87,7 +137,34 @@ class FieldRecordUnbookSerializer(serializers.Serializer):
                 raise serializers.ValidationError(f"Field record {record.id} is not in BOOKED status.")
 
         return value
+    
 
+class FieldRecordUnmatchSerializer(serializers.Serializer):
+    id_list = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1
+    )
+
+    def validate_id_list(self, value):
+        user = self.context['request'].user
+        records = FieldRecord.objects.filter(id__in=value)
+
+        if not records.exists():
+            raise serializers.ValidationError("No matching records found.")
+
+        non_existing_ids = set(value) - set(records.values_list('id', flat=True))
+        if non_existing_ids:
+            raise serializers.ValidationError(f"The following IDs do not exist: {list(non_existing_ids)}")
+
+        for record in records:
+            # 检查是否是当前用户正在匹配的记录
+            if record.matching_user_id != user:
+                raise serializers.ValidationError(f"Field record {record.id} is not being matched by you.")
+            if record.status != FieldRecord.Status.MATCHING:
+                raise serializers.ValidationError(f"Field record {record.id} is not in MATCHING status.")
+
+        return value
+    
 
 class MyUserSerializer(serializers.ModelSerializer):
 
@@ -101,6 +178,7 @@ class MyUserSerializer(serializers.ModelSerializer):
             'username', 'phone', 'realname', 'nickname',
             'level', 'balance', 'email', 'date_joined'
         ]
+
 
 class FieldRecordMatchingSerializer(serializers.Serializer):
     id_list = serializers.ListField(
@@ -159,17 +237,12 @@ class FieldRecordScheduleSerializer(serializers.ModelSerializer):
     def get_opponent_icon_url(self, obj):
         request = self.context.get('request')
         if obj.status == FieldRecord.Status.MATCHED:
-            user = self.context['request'].user
+            current_user = self.context['request'].user
             opponent = None
 
-            # 查找除了当前用户以外的其他参与者
-            if obj.matched_user_id and obj.matched_user_id != user:
-                opponent = obj.matched_user_id
-            elif obj.matching_user_id and obj.matching_user_id != user:
-                opponent = obj.matching_user_id
-            elif obj.booked_user_id and obj.booked_user_id != user:
-                opponent = obj.booked_user_id  # 备用情况
-
-            if opponent and opponent.icon:
-                return request.build_absolute_uri(opponent.icon.url)
+            if obj.matching_user_id == current_user:
+                return request.build_absolute_uri(obj.matched_user_id.icon.url) if obj.matched_user_id and obj.matched_user_id.icon else None
+            elif obj.matched_user_id == current_user:
+                return request.build_absolute_uri(obj.matching_user_id.icon.url) if obj.matching_user_id and obj.matching_user_id.icon else None
         return None
+    

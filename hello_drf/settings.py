@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -161,6 +162,16 @@ REST_FRAMEWORK = {
     ]
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(seconds=10),
+    'ROTATE_REFRESH_TOKENS': True, 
+}
+
 # 'rest_framework.authentication.BasicAuthentication',
 # 'rest_framework.authentication.SessionAuthentication',
 # 'rest_framework.authentication.TokenAuthentication',
+
+
+WECHAT_APP_ID = 'wx25922ebd6daf6d3c'
+WECHAT_SECRET = 'c9ec850e6dab5a66f1f819d977e18ee5'

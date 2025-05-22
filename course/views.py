@@ -12,10 +12,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.utils import timezone
 from django.db.models import Q
+from django.contrib.auth import get_user_model
 import requests
+from django.conf import settings
 import json
+
 
 class WXLoginView(APIView):
 
@@ -27,8 +31,8 @@ class WXLoginView(APIView):
         code = request.data.get('code')
         wx_url = "https://api.weixin.qq.com/sns/jscode2session"
         params = {
-            'appid': 'wx25922ebd6daf6d3c',
-            'secret': 'c9ec850e6dab5a66f1f819d977e18ee5',
+            'appid': settings.WECHAT_APP_ID,
+            'secret': settings.WECHAT_SECRET,
             'js_code': code,
             'grant_type': 'authorization_code'
         }
@@ -45,8 +49,8 @@ class WXLoginView(APIView):
             defaults={
                 'username': openid,
                 'nickname': '匿名用户',
-                # 'level': 1.0,
-                # 'balance': 0.00
+                'level': 1.0,
+                'balance': 0.00
             }
         )
 
@@ -60,6 +64,45 @@ class WXLoginView(APIView):
             'refresh': str(refresh),
             'openid': openid
         })
+
+
+class RefreshTokenView(APIView):
+
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.data.get("refresh")
+
+        if not refresh_token:
+            return Response(
+                {"detail": "缺少 refresh token"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            old_refresh = RefreshToken(refresh_token)
+            user_id = old_refresh['user_id']
+            User = get_user_model()
+            user = User.objects.get(id=user_id)
+            new_refresh = RefreshToken.for_user(user)
+            data = {
+                "access": str(new_refresh.access_token),
+                "refresh": str(new_refresh),
+            }
+            return Response(data, status=status.HTTP_200_OK)
+
+        except TokenError as e:
+            return Response(
+                {"detail": "refresh token 无效或已过期"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        except Exception as e:
+            print(e)
+            return Response(
+                {"detail": "服务器错误"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class FieldDictView(APIView):

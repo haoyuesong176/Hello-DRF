@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/field-unbook/', views.UnbookFieldRecordsView.as_view(), name='unbooking'),
     path('api/field-unmatching/', views.UnmatchingFieldRecordsView.as_view(), name='unmatching'),
     path('api/wx-login/', views.WXLoginView.as_view(), name='login-auth'),
+    path('api/token/refresh/', views.RefreshTokenView.as_view(), name='token-refresh'),
     path('api/user-book-data/', views.UserBookedFieldRecordsView.as_view(), name='user-book-data'),
     path('api/user-matching-data/', views.UserMatchingFieldRecordsView.as_view(), name='user-matching-data'),
     path('api/user-matched-data/', views.UserMatchedFieldRecordsView.as_view(), name='user-matched-data'),

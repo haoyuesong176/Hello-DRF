@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User 
 from .models import FieldRecord, MyUser
+from decimal import Decimal
+
 
 class FieldRecordSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source='get_status_display')
@@ -189,8 +191,8 @@ class FieldRecordMatchingSerializer(serializers.Serializer):
     min_level = serializers.DecimalField(
         max_digits=2,
         decimal_places=1,
-        min_value=1.0,
-        max_value=5.0
+        min_value=Decimal('1.0'),
+        max_value=Decimal('5.0')
     )
 
 
